@@ -1,0 +1,123 @@
+# Git
+.gitmessage
+
+# Claude Code / TaskMaster (local development files)
+.claude/
+.mcp.json
+VibeCoding_Workflow_Templates/
+MCP_SETUP_GUIDE.md
+PROJECT_STRUCTURE.md
+LICENSE
+CLAUDE_TEMPLATE.md
+CLAUDE.md
+
+# uv package manager
+.uv/
+uv.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Output files
+output/
+*.csv
+*.xlsx
+
+# AI/ML specific
+*.pkl
+*.joblib
+*.h5
+*.pb
+*.onnx
+*.pt
+*.pth
+*.model
+*.weights
+models/trained/
+models/checkpoints/
+experiments/results/
+.mlruns/
+mlruns/
+
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Data files (raw)
+data/raw/
+data/processed/
+data/external/
+data/temp/
+data/*
+data/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.pem
+*.key
+credentials.json
+secrets.json
