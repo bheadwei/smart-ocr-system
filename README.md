@@ -19,14 +19,14 @@
 ## 系統需求
 
 - Python 3.10+
-- PaddlePaddle 2.5+
-- PaddleOCR 3.x
+- PaddlePaddle 2.6.2
+- PaddleOCR 2.9.1
 
 ---
 
 ## 安裝教學
 
-### 方法一：使用 uv（推薦）
+### 方法一：CPU 版本（推薦新手）
 
 ```bash
 # 複製專案
@@ -37,8 +37,6 @@ cd smart-ocr-system
 uv venv --python 3.10
 
 # 啟動虛擬環境
-# Windows (Git Bash)
-source .venv/Scripts/activate
 # Windows (CMD)
 .venv\Scripts\activate
 # Windows (PowerShell)
@@ -46,25 +44,50 @@ source .venv/Scripts/activate
 # Linux/macOS
 source .venv/bin/activate
 
-# 安裝相依套件
-uv pip install paddlepaddle paddleocr Pillow numpy opencv-python
+# 安裝 CPU 版本
+uv pip install paddlepaddle==2.6.2 paddleocr==2.9.1
 
-# 安裝專案（可編輯模式）
+# 安裝專案
 uv pip install -e .
 ```
 
-### 方法二：使用 pip
+### 方法二：GPU 版本（NVIDIA 顯卡加速）
+
+```bash
+# 複製專案
+git clone https://github.com/bheadwei/smart-ocr-system.git
+cd smart-ocr-system
+
+# 建立虛擬環境
+uv venv --python 3.10
+.venv\Scripts\activate  # Windows
+
+# 安裝 GPU 版本 (CUDA 11.8/12.x)
+uv pip install paddlepaddle-gpu==2.6.2 paddleocr==2.9.1
+
+# 安裝 cuDNN（Windows 必須）
+uv pip install nvidia-cudnn-cu11==8.9.5.29
+
+# 安裝專案
+uv pip install -e .
+```
+
+> **注意**：GPU 版本需要 NVIDIA 顯卡及 CUDA 驅動程式。程式會自動設定 cuDNN 路徑。
+
+### 方法三：使用 pip
 
 ```bash
 # 建立虛擬環境
 python -m venv .venv
-
-# 啟動虛擬環境
 .venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Linux/macOS
 
-# 安裝相依套件
-pip install paddlepaddle paddleocr Pillow numpy opencv-python
+# CPU 版本
+pip install paddlepaddle==2.6.2 paddleocr==2.9.1
+
+# 或 GPU 版本
+pip install paddlepaddle-gpu==2.6.2 paddleocr==2.9.1 nvidia-cudnn-cu11==8.9.5.29
+
+# 安裝專案
 pip install -e .
 ```
 
@@ -377,6 +400,30 @@ mypy src/
 
 ---
 
+## 快速執行範例
+
+```bash
+# 1. 啟動虛擬環境
+.venv\Scripts\activate
+
+# 2. 處理單張圖片（CPU）
+smart-ocr process data/image.jpg
+
+# 3. 處理單張圖片（GPU 加速）
+smart-ocr process data/image.jpg --gpu
+
+# 4. 輸出到 JSON 檔案
+smart-ocr process data/image.jpg -o output/result.json -f json --gpu
+
+# 5. 輸出到 CSV 檔案
+smart-ocr process data/image.jpg -o output/result.csv -f csv --gpu
+
+# 6. 批量處理整個資料夾
+smart-ocr process data/ -r -o output/batch_result.json -f json --gpu
+```
+
+---
+
 ## 常見問題
 
 ### Q: 辨識結果不準確？
@@ -396,6 +443,23 @@ mypy src/
 1. 確認 Python 版本為 3.10+
 2. 確認已正確安裝 PaddlePaddle
 3. Windows 用戶可能需要安裝 Visual C++ Redistributable
+
+### Q: GPU 版本出現 cuDNN 錯誤？
+
+如果出現 `cudnn64_8.dll not found` 錯誤：
+
+```bash
+# 安裝 cuDNN 8.x（paddlepaddle-gpu 2.6.2 需要）
+pip install nvidia-cudnn-cu11==8.9.5.29
+```
+
+### Q: Windows 終端機顯示亂碼？
+
+程式已自動處理 UTF-8 編碼。如果仍有問題，可在 PowerShell 執行：
+
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+```
 
 ---
 
