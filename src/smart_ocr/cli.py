@@ -5,12 +5,20 @@ Provides CLI commands for OCR processing.
 """
 
 import argparse
+import io
 import sys
 from pathlib import Path
 from typing import Optional
 
 from .core.config import OCRConfig
 from .core.ocr_engine import OCREngine
+
+
+def _setup_utf8_output() -> None:
+    """Setup UTF-8 output for Windows console."""
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -135,6 +143,7 @@ def config_command(args: argparse.Namespace) -> int:
 
 def main(argv: Optional[list] = None) -> int:
     """Main entry point for CLI."""
+    _setup_utf8_output()
     parser = create_parser()
     args = parser.parse_args(argv)
 

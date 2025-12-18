@@ -5,12 +5,35 @@ Core OCR processing engine using PaddleOCR for text recognition.
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from .config import OCRConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _setup_cuda_environment() -> None:
+    """Setup CUDA/cuDNN environment variables for Windows."""
+    try:
+        import nvidia.cudnn
+        import nvidia.cublas
+
+        cudnn_path = Path(nvidia.cudnn.__file__).parent / "bin"
+        cublas_path = Path(nvidia.cublas.__file__).parent / "bin"
+
+        current_path = os.environ.get("PATH", "")
+        new_paths = [str(cudnn_path), str(cublas_path)]
+
+        for p in new_paths:
+            if p not in current_path:
+                os.environ["PATH"] = p + ";" + current_path
+                current_path = os.environ["PATH"]
+
+        logger.debug(f"Added CUDA paths: {new_paths}")
+    except ImportError:
+        logger.debug("nvidia-cudnn/cublas not installed, skipping CUDA setup")
 
 
 class OCREngine:
@@ -46,14 +69,24 @@ class OCREngine:
         if self._initialized:
             return
 
+        # Setup CUDA environment for GPU mode
+        if self.config.use_gpu:
+            _setup_cuda_environment()
+
         try:
             from paddleocr import PaddleOCR
 
-            # PaddleOCR v3.x API
+            logger.info(
+                f"Initializing PaddleOCR (GPU: {self.config.use_gpu}, "
+                f"Lang: {self.config.lang})"
+            )
+
+            # PaddleOCR 2.x API
             self._ocr = PaddleOCR(
-                use_doc_orientation_classify=self.config.use_angle_cls,
-                use_doc_unwarping=False,
-                use_textline_orientation=self.config.use_angle_cls,
+                use_angle_cls=self.config.use_angle_cls,
+                lang=self.config.lang,
+                use_gpu=self.config.use_gpu,
+                show_log=self.config.show_log,
             )
             self._initialized = True
             logger.info("PaddleOCR engine initialized successfully")
@@ -86,9 +119,9 @@ class OCREngine:
 
         logger.info(f"Processing image: {image_path}")
 
-        # PaddleOCR v3.x uses predict() method
+        # PaddleOCR 2.x API
         assert self._ocr is not None, "OCR engine not initialized"
-        result = self._ocr.predict(input=str(image_path))
+        result = self._ocr.ocr(str(image_path), cls=self.config.use_angle_cls)
 
         return OCRResult.from_paddle_result(result, image_path)
 
@@ -236,42 +269,26 @@ class OCRResult:
 
     @classmethod
     def from_paddle_result(cls, result: Any, source_file: Path) -> "OCRResult":
-        """Create OCRResult from PaddleOCR v3.x output."""
-        lines = []
-        if result:
-            for res in result:
-                # PaddleOCR v3.x result format
-                # res has attributes: rec_texts, rec_scores, dt_polys
-                if hasattr(res, "rec_texts") and res.rec_texts:
-                    texts = (
-                        res.rec_texts
-                        if isinstance(res.rec_texts, list)
-                        else [res.rec_texts]
-                    )
-                    scores = (
-                        res.rec_scores
-                        if isinstance(res.rec_scores, list)
-                        else [res.rec_scores]
-                    )
-                    polys = (
-                        res.dt_polys
-                        if hasattr(res, "dt_polys") and res.dt_polys is not None
-                        else []
-                    )
+        """Create OCRResult from PaddleOCR 2.x output.
 
-                    for i, text in enumerate(texts):
-                        confidence = float(scores[i]) if i < len(scores) else 0.0
-                        bbox = polys[i].tolist() if i < len(polys) else []
-                        lines.append(OCRLine(str(text), confidence, bbox))
-                # Fallback for older format
-                elif isinstance(res, list) and len(res) > 0:
-                    for item in res:
-                        if isinstance(item, (list, tuple)) and len(item) >= 2:
-                            bbox = item[0] if isinstance(item[0], list) else []
-                            if isinstance(item[1], (list, tuple)) and len(item[1]) >= 2:
-                                text = str(item[1][0])
-                                confidence = float(item[1][1])
-                                lines.append(OCRLine(text, confidence, bbox))
+        PaddleOCR 2.x format:
+        [
+          [  # page results
+            [bbox, (text, confidence)],
+            [bbox, (text, confidence)],
+            ...
+          ]
+        ]
+        """
+        lines = []
+        if result and result[0]:
+            for item in result[0]:
+                if isinstance(item, (list, tuple)) and len(item) >= 2:
+                    bbox = item[0] if isinstance(item[0], list) else []
+                    if isinstance(item[1], (list, tuple)) and len(item[1]) >= 2:
+                        text = str(item[1][0])
+                        confidence = float(item[1][1])
+                        lines.append(OCRLine(text, confidence, bbox))
         return cls(source_file, lines)
 
     def to_dict(self) -> Dict:
