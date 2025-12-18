@@ -4,9 +4,9 @@ OCR Engine Module
 Core OCR processing engine using PaddleOCR for text recognition.
 """
 
-from pathlib import Path
-from typing import Dict, List, Optional, Union
 import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 from .config import OCRConfig
 
@@ -87,6 +87,7 @@ class OCREngine:
         logger.info(f"Processing image: {image_path}")
 
         # PaddleOCR v3.x uses predict() method
+        assert self._ocr is not None, "OCR engine not initialized"
         result = self._ocr.predict(input=str(image_path))
 
         return OCRResult.from_paddle_result(result, image_path)
@@ -95,7 +96,7 @@ class OCREngine:
         self,
         directory: Union[str, Path],
         extensions: Optional[List[str]] = None,
-        recursive: bool = False
+        recursive: bool = False,
     ) -> List["OCRResult"]:
         """
         Process all images in a directory.
@@ -113,13 +114,16 @@ class OCREngine:
         if not directory.is_dir():
             raise NotADirectoryError(f"Not a directory: {directory}")
 
-        extensions = extensions or ['.png', '.jpg', '.jpeg', '.bmp', '.tiff']
-        extensions = [ext.lower() if ext.startswith('.') else f'.{ext.lower()}'
-                     for ext in extensions]
+        extensions = extensions or [".png", ".jpg", ".jpeg", ".bmp", ".tiff"]
+        extensions = [
+            ext.lower() if ext.startswith(".") else f".{ext.lower()}"
+            for ext in extensions
+        ]
 
-        pattern = '**/*' if recursive else '*'
+        pattern = "**/*" if recursive else "*"
         image_files = [
-            f for f in directory.glob(pattern)
+            f
+            for f in directory.glob(pattern)
             if f.is_file() and f.suffix.lower() in extensions
         ]
 
@@ -139,7 +143,7 @@ class OCREngine:
         self,
         results: List["OCRResult"],
         output_path: Optional[Union[str, Path]] = None,
-        format: str = "json"
+        format: str = "json",
     ) -> Path:
         """
         Export OCR results to file.
@@ -172,28 +176,27 @@ class OCREngine:
     def _export_json(self, results: List["OCRResult"], path: Path) -> None:
         """Export results as JSON."""
         import json
+
         data = [r.to_dict() for r in results]
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     def _export_csv(self, results: List["OCRResult"], path: Path) -> None:
         """Export results as CSV."""
         import csv
-        with open(path, 'w', encoding='utf-8', newline='') as f:
+
+        with open(path, "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(['file', 'text', 'confidence', 'bbox'])
+            writer.writerow(["file", "text", "confidence", "bbox"])
             for r in results:
                 for line in r.lines:
-                    writer.writerow([
-                        r.source_file,
-                        line.text,
-                        line.confidence,
-                        line.bbox
-                    ])
+                    writer.writerow(
+                        [r.source_file, line.text, line.confidence, line.bbox]
+                    )
 
     def _export_txt(self, results: List["OCRResult"], path: Path) -> None:
         """Export results as plain text."""
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             for r in results:
                 f.write(f"=== {r.source_file} ===\n")
                 f.write(r.text)
@@ -209,11 +212,7 @@ class OCRLine:
         self.bbox = bbox
 
     def to_dict(self) -> Dict:
-        return {
-            "text": self.text,
-            "confidence": self.confidence,
-            "bbox": self.bbox
-        }
+        return {"text": self.text, "confidence": self.confidence, "bbox": self.bbox}
 
 
 class OCRResult:
@@ -236,17 +235,29 @@ class OCRResult:
         return sum(line.confidence for line in self.lines) / len(self.lines)
 
     @classmethod
-    def from_paddle_result(cls, result, source_file: Path) -> "OCRResult":
+    def from_paddle_result(cls, result: Any, source_file: Path) -> "OCRResult":
         """Create OCRResult from PaddleOCR v3.x output."""
         lines = []
         if result:
             for res in result:
                 # PaddleOCR v3.x result format
                 # res has attributes: rec_texts, rec_scores, dt_polys
-                if hasattr(res, 'rec_texts') and res.rec_texts:
-                    texts = res.rec_texts if isinstance(res.rec_texts, list) else [res.rec_texts]
-                    scores = res.rec_scores if isinstance(res.rec_scores, list) else [res.rec_scores]
-                    polys = res.dt_polys if hasattr(res, 'dt_polys') and res.dt_polys is not None else []
+                if hasattr(res, "rec_texts") and res.rec_texts:
+                    texts = (
+                        res.rec_texts
+                        if isinstance(res.rec_texts, list)
+                        else [res.rec_texts]
+                    )
+                    scores = (
+                        res.rec_scores
+                        if isinstance(res.rec_scores, list)
+                        else [res.rec_scores]
+                    )
+                    polys = (
+                        res.dt_polys
+                        if hasattr(res, "dt_polys") and res.dt_polys is not None
+                        else []
+                    )
 
                     for i, text in enumerate(texts):
                         confidence = float(scores[i]) if i < len(scores) else 0.0
@@ -269,5 +280,5 @@ class OCRResult:
             "source_file": str(self.source_file),
             "text": self.text,
             "average_confidence": self.average_confidence,
-            "lines": [line.to_dict() for line in self.lines]
+            "lines": [line.to_dict() for line in self.lines],
         }

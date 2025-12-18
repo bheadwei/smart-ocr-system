@@ -35,71 +35,50 @@ Examples:
 
   # Process with English language
   smart-ocr process image.png --lang en
-        """
+        """,
     )
 
     parser.add_argument(
-        "--version", "-v",
-        action="store_true",
-        help="Show version information"
+        "--version", "-v", action="store_true", help="Show version information"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Process command
-    process_parser = subparsers.add_parser(
-        "process",
-        help="Process image(s) for OCR"
+    process_parser = subparsers.add_parser("process", help="Process image(s) for OCR")
+    process_parser.add_argument("input", type=str, help="Input image file or directory")
+    process_parser.add_argument(
+        "--output", "-o", type=str, default=None, help="Output file path"
     )
     process_parser.add_argument(
-        "input",
-        type=str,
-        help="Input image file or directory"
-    )
-    process_parser.add_argument(
-        "--output", "-o",
-        type=str,
-        default=None,
-        help="Output file path"
-    )
-    process_parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         type=str,
         choices=["txt", "json", "csv"],
         default="txt",
-        help="Output format (default: txt)"
+        help="Output format (default: txt)",
     )
     process_parser.add_argument(
-        "--lang", "-l",
+        "--lang",
+        "-l",
         type=str,
         default="ch",
-        help="Language for OCR (default: ch for Chinese)"
+        help="Language for OCR (default: ch for Chinese)",
     )
     process_parser.add_argument(
-        "--gpu",
-        action="store_true",
-        help="Use GPU acceleration"
+        "--gpu", action="store_true", help="Use GPU acceleration"
     )
     process_parser.add_argument(
-        "--recursive", "-r",
-        action="store_true",
-        help="Process directories recursively"
+        "--recursive", "-r", action="store_true", help="Process directories recursively"
     )
     process_parser.add_argument(
-        "--quiet", "-q",
-        action="store_true",
-        help="Suppress output"
+        "--quiet", "-q", action="store_true", help="Suppress output"
     )
 
     # Config command
-    config_parser = subparsers.add_parser(
-        "config",
-        help="Show or modify configuration"
-    )
+    config_parser = subparsers.add_parser("config", help="Show or modify configuration")
     config_parser.add_argument(
-        "--show",
-        action="store_true",
-        help="Show current configuration"
+        "--show", action="store_true", help="Show current configuration"
     )
 
     return parser
@@ -110,11 +89,7 @@ def process_command(args: argparse.Namespace) -> int:
     input_path = Path(args.input)
 
     # Create configuration
-    config = OCRConfig(
-        lang=args.lang,
-        use_gpu=args.gpu,
-        show_log=not args.quiet
-    )
+    config = OCRConfig(lang=args.lang, use_gpu=args.gpu, show_log=not args.quiet)
 
     # Initialize engine
     engine = OCREngine(config)
@@ -128,10 +103,7 @@ def process_command(args: argparse.Namespace) -> int:
             print("-" * 40)
             print(results[0].text)
     elif input_path.is_dir():
-        results = engine.process_directory(
-            input_path,
-            recursive=args.recursive
-        )
+        results = engine.process_directory(input_path, recursive=args.recursive)
         if not args.quiet:
             print(f"Processed {len(results)} images")
     else:
@@ -141,9 +113,7 @@ def process_command(args: argparse.Namespace) -> int:
     # Export if output specified
     if args.output:
         output_path = engine.export_results(
-            results,
-            output_path=args.output,
-            format=args.format
+            results, output_path=args.output, format=args.format
         )
         if not args.quiet:
             print(f"Results exported to: {output_path}")
@@ -170,6 +140,7 @@ def main(argv: Optional[list] = None) -> int:
 
     if args.version:
         from . import __version__
+
         print(f"Smart OCR System v{__version__}")
         return 0
 

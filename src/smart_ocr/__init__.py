@@ -11,7 +11,7 @@ Version: 0.1.0
 __version__ = "0.1.0"
 __author__ = "Smart OCR Team"
 
-from .core.ocr_engine import OCREngine
 from .core.config import OCRConfig
+from .core.ocr_engine import OCREngine
 
 __all__ = ["OCREngine", "OCRConfig", "__version__"]

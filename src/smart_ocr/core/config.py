@@ -4,10 +4,10 @@ OCR Configuration Module
 Handles all configuration settings for the Smart OCR system.
 """
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
-import os
+from typing import List
 
 
 @dataclass
@@ -42,7 +42,7 @@ class OCRConfig:
     enable_mkldnn: bool = False
     show_log: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and process configuration after initialization."""
         self.output_dir = Path(self.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -51,7 +51,9 @@ class OCRConfig:
         valid_formats = {"txt", "json", "csv", "xlsx"}
         for fmt in self.export_formats:
             if fmt not in valid_formats:
-                raise ValueError(f"Invalid export format: {fmt}. Valid: {valid_formats}")
+                raise ValueError(
+                    f"Invalid export format: {fmt}. Valid: {valid_formats}"
+                )
 
     @classmethod
     def from_env(cls) -> "OCRConfig":

@@ -2,10 +2,11 @@
 Unit tests for OCR configuration.
 """
 
-import pytest
 from pathlib import Path
 
-from src.smart_ocr.core.config import OCRConfig
+import pytest
+
+from smart_ocr.core.config import OCRConfig
 
 
 class TestOCRConfig:
@@ -43,12 +44,7 @@ class TestOCRConfig:
 
     def test_custom_settings(self):
         """Test custom configuration settings."""
-        config = OCRConfig(
-            lang="en",
-            use_gpu=True,
-            cpu_threads=8,
-            det_db_thresh=0.5
-        )
+        config = OCRConfig(lang="en", use_gpu=True, cpu_threads=8, det_db_thresh=0.5)
         assert config.lang == "en"
         assert config.use_gpu is True
         assert config.cpu_threads == 8
