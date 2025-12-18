@@ -49,16 +49,11 @@ class OCREngine:
         try:
             from paddleocr import PaddleOCR
 
+            # PaddleOCR v3.x API
             self._ocr = PaddleOCR(
-                use_angle_cls=self.config.use_angle_cls,
-                lang=self.config.lang,
-                use_gpu=self.config.use_gpu,
-                show_log=self.config.show_log,
-                enable_mkldnn=self.config.enable_mkldnn,
-                det_db_thresh=self.config.det_db_thresh,
-                det_db_box_thresh=self.config.det_db_box_thresh,
-                det_db_unclip_ratio=self.config.det_db_unclip_ratio,
-                rec_batch_num=self.config.rec_batch_num,
+                use_doc_orientation_classify=self.config.use_angle_cls,
+                use_doc_unwarping=False,
+                use_textline_orientation=self.config.use_angle_cls,
             )
             self._initialized = True
             logger.info("PaddleOCR engine initialized successfully")
@@ -91,7 +86,8 @@ class OCREngine:
 
         logger.info(f"Processing image: {image_path}")
 
-        result = self._ocr.ocr(str(image_path), cls=self.config.use_angle_cls)
+        # PaddleOCR v3.x uses predict() method
+        result = self._ocr.predict(input=str(image_path))
 
         return OCRResult.from_paddle_result(result, image_path)
 
@@ -240,15 +236,31 @@ class OCRResult:
         return sum(line.confidence for line in self.lines) / len(self.lines)
 
     @classmethod
-    def from_paddle_result(cls, result: List, source_file: Path) -> "OCRResult":
-        """Create OCRResult from PaddleOCR output."""
+    def from_paddle_result(cls, result, source_file: Path) -> "OCRResult":
+        """Create OCRResult from PaddleOCR v3.x output."""
         lines = []
-        if result and result[0]:
-            for item in result[0]:
-                bbox = item[0]
-                text = item[1][0]
-                confidence = item[1][1]
-                lines.append(OCRLine(text, confidence, bbox))
+        if result:
+            for res in result:
+                # PaddleOCR v3.x result format
+                # res has attributes: rec_texts, rec_scores, dt_polys
+                if hasattr(res, 'rec_texts') and res.rec_texts:
+                    texts = res.rec_texts if isinstance(res.rec_texts, list) else [res.rec_texts]
+                    scores = res.rec_scores if isinstance(res.rec_scores, list) else [res.rec_scores]
+                    polys = res.dt_polys if hasattr(res, 'dt_polys') and res.dt_polys is not None else []
+
+                    for i, text in enumerate(texts):
+                        confidence = float(scores[i]) if i < len(scores) else 0.0
+                        bbox = polys[i].tolist() if i < len(polys) else []
+                        lines.append(OCRLine(str(text), confidence, bbox))
+                # Fallback for older format
+                elif isinstance(res, list) and len(res) > 0:
+                    for item in res:
+                        if isinstance(item, (list, tuple)) and len(item) >= 2:
+                            bbox = item[0] if isinstance(item[0], list) else []
+                            if isinstance(item[1], (list, tuple)) and len(item[1]) >= 2:
+                                text = str(item[1][0])
+                                confidence = float(item[1][1])
+                                lines.append(OCRLine(text, confidence, bbox))
         return cls(source_file, lines)
 
     def to_dict(self) -> Dict:
