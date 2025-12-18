@@ -62,7 +62,7 @@ Examples:
         "--format",
         "-f",
         type=str,
-        choices=["txt", "json", "csv"],
+        choices=["txt", "json", "csv", "xlsx"],
         default="txt",
         help="Output format (default: txt)",
     )

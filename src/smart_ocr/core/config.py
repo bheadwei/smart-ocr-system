@@ -36,7 +36,7 @@ class OCRConfig:
 
     # Output settings
     output_dir: Path = field(default_factory=lambda: Path("output"))
-    export_formats: List[str] = field(default_factory=lambda: ["txt", "json", "csv"])
+    export_formats: List[str] = field(default_factory=lambda: ["txt", "json", "csv", "xlsx"])
 
     # Logging
     enable_mkldnn: bool = False

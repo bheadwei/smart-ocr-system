@@ -200,6 +200,8 @@ class OCREngine:
             self._export_json(results, output_path)
         elif format == "csv":
             self._export_csv(results, output_path)
+        elif format == "xlsx":
+            self._export_xlsx(results, output_path)
         else:
             self._export_txt(results, output_path)
 
@@ -234,6 +236,64 @@ class OCREngine:
                 f.write(f"=== {r.source_file} ===\n")
                 f.write(r.text)
                 f.write("\n\n")
+
+    def _export_xlsx(self, results: List["OCRResult"], path: Path) -> None:
+        """Export results as Excel file (UTF-8 encoded)."""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        except ImportError:
+            raise ImportError(
+                "openpyxl is required for Excel export. "
+                "Install it with: pip install openpyxl"
+            )
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "OCR Results"
+
+        # Define styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin")
+        )
+
+        # Write headers
+        headers = ["檔案", "行號", "文字內容", "信心分數", "座標"]
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+
+        # Write data
+        row_num = 2
+        for r in results:
+            for line_idx, line in enumerate(r.lines, 1):
+                ws.cell(row=row_num, column=1, value=str(r.source_file)).border = thin_border
+                ws.cell(row=row_num, column=2, value=line_idx).border = thin_border
+                ws.cell(row=row_num, column=3, value=line.text).border = thin_border
+                ws.cell(row=row_num, column=4, value=f"{line.confidence:.2%}").border = thin_border
+                ws.cell(row=row_num, column=5, value=str(line.bbox)).border = thin_border
+                row_num += 1
+
+        # Adjust column widths
+        ws.column_dimensions["A"].width = 30  # 檔案
+        ws.column_dimensions["B"].width = 8   # 行號
+        ws.column_dimensions["C"].width = 60  # 文字內容
+        ws.column_dimensions["D"].width = 12  # 信心分數
+        ws.column_dimensions["E"].width = 40  # 座標
+
+        # Freeze header row
+        ws.freeze_panes = "A2"
+
+        wb.save(path)
 
 
 class OCRLine:

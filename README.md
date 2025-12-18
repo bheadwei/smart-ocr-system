@@ -166,7 +166,7 @@ smart-ocr process ./文件/ -r -o 結果.json -f json --gpu
 | 參數 | 簡寫 | 說明 | 預設值 |
 |------|------|------|--------|
 | `--output` | `-o` | 輸出檔案路徑 | 無（顯示在終端機） |
-| `--format` | `-f` | 輸出格式：txt, json, csv | txt |
+| `--format` | `-f` | 輸出格式：txt, json, csv, xlsx | txt |
 | `--lang` | `-l` | 語言：ch（中文）, en（英文） | ch |
 | `--gpu` | - | 啟用 GPU 加速 | 停用 |
 | `--recursive` | `-r` | 遞迴處理子資料夾 | 停用 |
@@ -313,6 +313,20 @@ engine = OCREngine(config_cn)
 | 文件1.png | 這是辨識出來的文字內容 | 0.96 | [[10,10],...] |
 | 文件1.png | 第二行文字 | 0.94 | [[10,40],...] |
 
+### XLSX 格式（Excel）
+
+Excel 檔案包含以下欄位，使用 UTF-8 編碼：
+
+| 檔案 | 行號 | 文字內容 | 信心分數 | 座標 |
+|------|------|----------|----------|------|
+| 文件1.png | 1 | 這是辨識出來的文字內容 | 96.00% | [[10,10],...] |
+| 文件1.png | 2 | 第二行文字 | 94.00% | [[10,40],...] |
+
+**特色**：
+- 標題列固定（凍結窗格）
+- 欄位寬度自動調整
+- 支援直接用 Excel 開啟，無亂碼
+
 ---
 
 ## 支援的圖片格式
@@ -418,7 +432,10 @@ smart-ocr process data/image.jpg -o output/result.json -f json --gpu
 # 5. 輸出到 CSV 檔案
 smart-ocr process data/image.jpg -o output/result.csv -f csv --gpu
 
-# 6. 批量處理整個資料夾
+# 6. 輸出到 Excel 檔案（UTF-8 編碼）
+smart-ocr process data/image.jpg -o output/result.xlsx -f xlsx --gpu
+
+# 7. 批量處理整個資料夾
 smart-ocr process data/ -r -o output/batch_result.json -f json --gpu
 ```
 
