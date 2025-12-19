@@ -1,0 +1,15 @@
+# Smart OCR System - Requirements
+# Python 3.8+
+
+# Core dependencies
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+Pillow>=9.0.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# Export formats
+openpyxl>=3.0.0  # Excel export
+
+# Development dependencies (optional)
+# pip install -r requirements-dev.txt
