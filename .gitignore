@@ -121,3 +121,5 @@ data/
 *.key
 credentials.json
 secrets.json
+
+nul

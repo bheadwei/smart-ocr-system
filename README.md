@@ -4,15 +4,29 @@
 
 基於 PaddleOCR 引擎的高性能文字辨識解決方案，支援批量處理與多格式匯出。
 
+本專案包含兩個主要模組：
+- **smart-ocr-system** (CLI) - 本地命令列 OCR 工具，基於 PaddleOCR
+- **smart-ocr-saas** (Web) - 雲端 SaaS 服務，基於 OpenAI Vision API
+
 ---
 
 ## 功能特色
 
+### CLI 工具 (PaddleOCR)
+
 - **中文優化** - 使用 PaddleOCR 引擎，針對繁體/簡體中文辨識優化
 - **批量處理** - 支援資料夾批量處理，遞迴掃描子目錄
-- **多格式匯出** - 支援 TXT、JSON、CSV 多種格式匯出
+- **多格式匯出** - 支援 TXT、JSON、CSV、XLSX 多種格式匯出
 - **命令列介面** - 簡潔的 CLI 介面，易於整合自動化流程
-- **靈活配置** - 可調整辨識參數，適應不同場景需求
+- **GPU 加速** - 支援 NVIDIA GPU 加速處理
+
+### SaaS 服務 (OpenAI Vision)
+
+- **雲端部署** - Docker 一鍵部署，支援企業內部署
+- **Web 介面** - 現代化 Next.js 前端，拖拽上傳
+- **PDF 支援** - 支援 PDF 文件辨識（最多 10 頁）
+- **即時進度** - WebSocket 即時處理進度推送
+- **企業認證** - 支援本地帳號 + LDAP/AD 登入
 
 ---
 
@@ -345,16 +359,31 @@ Excel 檔案包含以下欄位，使用 UTF-8 編碼：
 
 ```
 smart-ocr-system/
-├── src/smart_ocr/           # 原始碼
+├── src/smart_ocr/           # CLI 工具原始碼
 │   ├── __init__.py          # 套件初始化
 │   ├── cli.py               # 命令列介面
 │   └── core/
 │       ├── config.py        # 配置管理
-│       └── ocr_engine.py    # OCR 處理引擎
+│       └── ocr_engine.py    # OCR 處理引擎 (PaddleOCR)
+│
+├── smart-ocr-saas/          # SaaS 服務 (OpenAI Vision)
+│   ├── backend/             # FastAPI 後端
+│   │   ├── app/
+│   │   │   ├── api/v1/      # API 路由
+│   │   │   ├── core/        # 核心功能
+│   │   │   ├── models/      # 資料模型
+│   │   │   ├── services/    # 業務邏輯
+│   │   │   └── repositories/# 資料存取層
+│   │   └── Dockerfile
+│   ├── frontend/            # Next.js 前端
+│   │   ├── app/             # App Router 頁面
+│   │   ├── stores/          # Zustand 狀態管理
+│   │   └── Dockerfile
+│   └── docker-compose.yml   # Docker 部署配置
+│
 ├── tests/                   # 測試套件
-│   ├── unit/                # 單元測試
-│   ├── integration/         # 整合測試
-│   └── conftest.py          # 測試共用 fixtures
+├── docs/                    # 專案文件
+├── data/                    # 測試資料
 ├── output/                  # 輸出目錄
 ├── pyproject.toml           # 專案配置
 └── README.md                # 本文件
@@ -480,6 +509,19 @@ pip install nvidia-cudnn-cu11==8.9.5.29
 
 ---
 
+## SaaS 服務
+
+如需使用雲端版本（基於 OpenAI Vision API），請參閱 [smart-ocr-saas/README.md](./smart-ocr-saas/README.md)。
+
+SaaS 版本提供：
+- Web 介面操作
+- PDF 文件辨識
+- 企業 LDAP 認證
+- 歷史紀錄管理
+- 多格式匯出
+
+---
+
 ## 授權
 
 MIT License
@@ -490,3 +532,4 @@ MIT License
 
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) - 優秀的多語言 OCR 工具包
 - [PaddlePaddle](https://www.paddlepaddle.org.cn/) - 深度學習平台
+- [OpenAI](https://openai.com/) - GPT-4 Vision API
